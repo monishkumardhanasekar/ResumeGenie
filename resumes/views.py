@@ -1,10 +1,13 @@
+import json
 from django.shortcuts import render, redirect
 from .forms import ResumeUploadForm
 from .models import Resume
-from .openai_utils import extract_text_from_pdf, extract_text_from_docx, extract_text_from_txt
+from .openai_utils import extract_text_from_pdf, extract_text_from_docx, extract_text_from_txt, get_resume_details_from_ai
+from pymongo import MongoClient  # Import the MongoClient from PyMongo
 
 def upload_resume(request):
     extracted_text = None
+    ai_json = None
     if request.method == 'POST':
         form = ResumeUploadForm(request.POST, request.FILES)
         if form.is_valid():
@@ -22,10 +25,33 @@ def upload_resume(request):
             elif file_ext == 'txt':
                 extracted_text = extract_text_from_txt(file)
 
-            return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text})
+            # Get AI response
+            if extracted_text:
+                ai_response = get_resume_details_from_ai(extracted_text)
+                
+                # Extract JSON from AI response
+                try:
+                    start_index = ai_response.find('{')
+                    end_index = ai_response.rfind('}') + 1
+                    json_str = ai_response[start_index:end_index]
+                    ai_json = json.loads(json_str)  # Convert JSON string to Python dictionary
+                    
+                    # Save the JSON to MongoDB
+                    client = MongoClient('mongodb://localhost:27017/')
+                    db = client['resumegeniedb']
+                    resumes_collection = db['resumes_resume']
+                    resumes_collection.update_one(
+                        {'_id': resume.id},  # Match the resume document by its ID
+                        {'$set': {'ai_json': ai_json}},  # Add the JSON data to the 'ai_json' field
+                        upsert=True
+                    )
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON: {e}")
+
+            return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text, 'ai_json': ai_json})
     else:
         form = ResumeUploadForm()
-    return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text})
+    return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text, 'ai_json': ai_json})
 
 def success(request):
     return render(request, 'success.html')

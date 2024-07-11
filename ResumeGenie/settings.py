@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import djongo
 import environ
-# import openai
+
 
 env = environ.Env(
     # set casting, default value
@@ -77,11 +77,14 @@ WSGI_APPLICATION = 'ResumeGenie.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-      'default': {
-          'ENGINE': 'djongo',
-          'NAME': 'resumegeniedb',
-      }
-  }
+    'default': {
+        'ENGINE': 'djongo',
+        'NAME': 'resumegeniedb',
+        'HOST': 'localhost',  
+        'PORT': 27017,      
+    }
+}
+
 
 
 # Password validation
