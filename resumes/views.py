@@ -3,7 +3,13 @@ from django.shortcuts import render, redirect
 from .forms import ResumeUploadForm
 from .models import Resume
 from .openai_utils import extract_text_from_pdf, extract_text_from_docx, extract_text_from_txt, get_resume_details_from_ai
+from dotenv import load_dotenv
 from pymongo import MongoClient  # Import the MongoClient from PyMongo
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
 
 def upload_resume(request):
     extracted_text = None
@@ -37,9 +43,13 @@ def upload_resume(request):
                     ai_json = json.loads(json_str)  # Convert JSON string to Python dictionary
                     
                     # Save the JSON to MongoDB
-                    client = MongoClient('mongodb://localhost:27017/')
-                    db = client['resumegeniedb']
-                    resumes_collection = db['resumes_resume']
+                    # Save the JSON to MongoDB
+                    mongo_uri = os.getenv('MONGODB_URI')
+                    db_name = os.getenv('MONGODB_DB_NAME')
+                    collection_name = os.getenv('MONGODB_COLLECTION_NAME')
+                    client = MongoClient(mongo_uri)
+                    db = client[db_name]
+                    resumes_collection = db[collection_name]
                     resumes_collection.update_one(
                         {'_id': resume.id},  # Match the resume document by its ID
                         {'$set': {'ai_json': ai_json}},  # Add the JSON data to the 'ai_json' field

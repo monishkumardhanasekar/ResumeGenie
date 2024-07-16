@@ -75,13 +75,12 @@ WSGI_APPLICATION = 'ResumeGenie.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'resumegeniedb',
-        'HOST': 'localhost',  
-        'PORT': 27017,      
+        'NAME': env('MONGODB_DB_NAME'),
+        'HOST': env('MONGODB_URI'),
+        'PORT': 27017,
     }
 }
 

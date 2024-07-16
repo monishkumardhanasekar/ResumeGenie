@@ -36,14 +36,14 @@ def get_resume_details_from_ai(extracted_text):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "user", "content": f"Extract details from the following resume text and provide a structured JSON format with fields like name, email, phone, skills, experience, education, and other fields. Also, Don't forget to add this ######## at the very immediate start and end of that json file \n\n{extracted_text}"}
+            {"role": "user", "content": f"Extract details from the following resume text and provide a structured JSON format with fields like name, email, phone, skills, experience, education, and everything. Also, Don't forget to add this ######## at the very immediate start and end of that json file \n\n{extracted_text}"}
         ],
         temperature=0.5,
         max_tokens=2000,
     )
     return response.choices[0].message.content
-#     json_str = ai_response.split("########")[1].strip()  # Extract the JSON string
-#     return json.loads(json_str)  # Convert the JSON string to a Python dictionary
+    # json_str = ai_response.split("########")[1].strip()  # Extract the JSON string
+    # return json.loads(json_str)  # Convert the JSON string to a Python dictionary
 
 # def save_resume_to_mongodb(resume_data):
 #     # Establish connection to MongoDB
