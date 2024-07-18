@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'djongo',
     'resumes',
     'storages',
+    'ats',
 
 ]
 

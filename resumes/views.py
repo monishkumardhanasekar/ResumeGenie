@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from .forms import ResumeUploadForm
 from .models import Resume
 from .openai_utils import extract_text_from_pdf, extract_text_from_docx, extract_text_from_txt, get_resume_details_from_ai
+from ats.scoring import check_contact_info, check_qualifications, check_education  # Import the ATS scoring function
 from dotenv import load_dotenv
 from pymongo import MongoClient  # Import the MongoClient from PyMongo
 import os
@@ -10,10 +11,12 @@ import os
 # Load environment variables from .env file
 load_dotenv()
 
-
 def upload_resume(request):
     extracted_text = None
     ai_json = None
+    ats_score = None
+    ats_score_qualificaion = None
+    ats_score_education= None
     if request.method == 'POST':
         form = ResumeUploadForm(request.POST, request.FILES)
         if form.is_valid():
@@ -43,7 +46,6 @@ def upload_resume(request):
                     ai_json = json.loads(json_str)  # Convert JSON string to Python dictionary
                     
                     # Save the JSON to MongoDB
-                    # Save the JSON to MongoDB
                     mongo_uri = os.getenv('MONGODB_URI')
                     db_name = os.getenv('MONGODB_DB_NAME')
                     collection_name = os.getenv('MONGODB_COLLECTION_NAME')
@@ -55,13 +57,19 @@ def upload_resume(request):
                         {'$set': {'ai_json': ai_json}},  # Add the JSON data to the 'ai_json' field
                         upsert=True
                     )
+                    
+                    # Calculate ATS score
+                    ats_score = check_contact_info(ai_json)
+                    ats_score_qualificaion = check_qualifications(ai_json)
+                    ats_score_education = check_education(ai_json)
+
                 except json.JSONDecodeError as e:
                     print(f"Error decoding JSON: {e}")
 
-            return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text, 'ai_json': ai_json})
+            return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text, 'ai_json': ai_json, 'ats_score': ats_score, 'ats_score_qualification': ats_score_qualificaion, 'ats_score_education': ats_score_education})
     else:
         form = ResumeUploadForm()
-    return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text, 'ai_json': ai_json})
+    return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text, 'ai_json': ai_json, 'ats_score': ats_score})
 
 def success(request):
     return render(request, 'success.html')

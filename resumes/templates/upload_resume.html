@@ -1,23 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Upload Resume</title>
 </head>
 <body>
     <h1>Upload Your Resume</h1>
-    <form method="POST" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Upload</button>
     </form>
     {% if extracted_text %}
-        <h2>Extracted Text:</h2>
+        <h2>Extracted Text</h2>
         <pre>{{ extracted_text }}</pre>
     {% endif %}
     {% if ai_json %}
-        <h2>AI Generated JSON:</h2>
+        <h2>AI JSON</h2>
         <pre>{{ ai_json }}</pre>
+    {% endif %}
+    {% if ats_score is not None %}
+        <h2>ATS Score: {{ ats_score }}</h2>
+    {% endif %}
+    {% if ats_score_qualification is not None %}
+        <h2>ATS Score (Qualification): {{ ats_score_qualification }}</h2>
+    {% endif %}
+    {% if ats_score_education is not None %}
+        <h2>ATS Score (Education): {{ ats_score_education }}</h2>
     {% endif %}
 </body>
 </html>
