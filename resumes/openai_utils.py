@@ -36,9 +36,9 @@ def get_resume_details_from_ai(extracted_text):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "user", "content": f"Extract details from the following resume text and provide a structured JSON format with fields like name, email, linkedin, phone, skills, work_experience, professional_certifications, education, and everything. \n\n{extracted_text}"}
+            {"role": "user", "content": f"Extract all details from the following resume text and provide a structured JSON format with fields like name, email, linkedin, phone, skills, work_experience, professional_certifications, education, project_experience and every fields with their details accordingly. \n\n{extracted_text}"}
         ],
         temperature=0.5,
-        max_tokens=2000,
+        max_tokens=3000,
     )
     return response.choices[0].message.content
