@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from .forms import ResumeUploadForm
 from .models import Resume
 from .openai_utils import extract_text_from_pdf, extract_text_from_docx, extract_text_from_txt, get_resume_details_from_ai
-from ats.scoring import check_contact_info, check_qualifications, check_education, check_work_experience, check_project_experience  # Import the ATS scoring functions
+from ats.scoring import check_contact_info, check_qualifications, check_education, check_work_experience, check_project_experience, check_quantification_metrics  # Import the ATS scoring functions
 from dotenv import load_dotenv
 from pymongo import MongoClient  # Import the MongoClient from PyMongo
 import os
@@ -19,6 +19,7 @@ def upload_resume(request):
     ats_score_education = None
     ats_score_work_experience = None
     ats_score_project_experience = None
+    ats_score_quantification_metrics = None
     if request.method == 'POST':
         form = ResumeUploadForm(request.POST, request.FILES)
         if form.is_valid():
@@ -66,12 +67,13 @@ def upload_resume(request):
                     ats_score_education = check_education(ai_json)
                     ats_score_work_experience = check_work_experience(ai_json)
                     ats_score_project_experience = check_project_experience(ai_json)  # Calculate project experience score
+                    ats_score_quantification_metrics = check_quantification_metrics(ai_json)
 
 
                 except json.JSONDecodeError as e:
                     print(f"Error decoding JSON: {e}")
 
-            return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text, 'ai_json': ai_json, 'ats_score_contact': ats_score_contact, 'ats_score_qualification': ats_score_qualification, 'ats_score_education': ats_score_education, 'ats_score_work_experience': ats_score_work_experience, 'ats_score_project_experience': ats_score_project_experience,})
+            return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text, 'ai_json': ai_json, 'ats_score_contact': ats_score_contact, 'ats_score_qualification': ats_score_qualification, 'ats_score_education': ats_score_education, 'ats_score_work_experience': ats_score_work_experience, 'ats_score_project_experience': ats_score_project_experience, 'ats_score_quantification_metrics': ats_score_quantification_metrics})
     else:
         form = ResumeUploadForm()
     return render(request, 'upload_resume.html', {'form': form, 'extracted_text': extracted_text, 'ai_json': ai_json, 'ats_score_contact': ats_score_contact})

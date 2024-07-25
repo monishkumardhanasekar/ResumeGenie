@@ -185,3 +185,50 @@ def check_project_experience(resume_json):
 
     return score
 
+
+
+def check_quantification_metrics(resume_data):
+    total_score = 100
+    quantification_score = 20
+
+    # Define regex patterns for quantification metrics
+    metric_patterns = [
+    r'\b\d+%?\b',  # Percentages and numbers
+    r'\b\d+\s(?:people|employees|team|projects|tasks|clients|customers|users|sales|units)\b',  # Quantified units
+    r'\b(?:sales|revenue|profit|budget|cost|efficiency|growth|output|performance|quality|capacity|retention|engagement)\b.*?\b\d+%?\b|\b\d+%?\b.*?\b(?:sales|revenue|profit|budget|cost|efficiency|growth|output|performance|quality|capacity|retention|engagement)\b',  # Performance metrics
+    r'\b(?:\$?\d+\,?\d*\.?\d*\b|€\d+\,?\d*\.?\d*\b|£\d+\,?\d*\.?\d*\b)',  # Currency metrics
+    r'\b(?:days|weeks|months|years|hours|minutes|seconds)\b.*?\b\d+%?\b|\b\d+%?\b.*?\b(?:days|weeks|months|years|hours|minutes|seconds)\b'  # Time metrics
+    ]
+
+
+    def has_quantification(text):
+        for pattern in metric_patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                return True
+        return False
+
+    all_jobs_have_quantification = True
+
+    responsibilities_keys = ['responsibilities', 'duties', 'tasks', 'job_responsibilities', 'work_responsibilities', 'obligations', 'functions', 'assignments', 'roles', 'activities', 'job_functions', 'work_duties', 'work_tasks', 'job_tasks', 'responsibilities_in_role', 'accountabilities', 'job_requirements', 'work_roles', 'work_expectations', 'job_experience', 'performance_criteria', 'work_requirements', 'areas_of_responsibility', 'job_description', 'work_description']
+
+    for job in resume_data.get('work_experience', []):
+        job_has_quantification = False
+        for key in responsibilities_keys:
+            responsibilities = job.get(key, [])
+            for responsibility in responsibilities:
+                if has_quantification(responsibility):
+                    job_has_quantification = True
+                    break
+            if job_has_quantification:
+                break
+        
+        if not job_has_quantification:
+            all_jobs_have_quantification = False
+            break
+
+    # Reduce score if any job title has no quantification metrics
+    if not all_jobs_have_quantification:
+        total_score -= quantification_score
+
+    return total_score
+

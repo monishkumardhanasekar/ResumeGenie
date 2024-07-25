@@ -36,6 +36,10 @@
         <h2>ATS Score (Project Experience): {{ ats_score_project_experience }}</h2>
     {% endif %}
 
+    {% if ats_score_quantification_metrics is not None %}
+    <h2>ATS Score (Work Quantification Experience): {{ ats_score_quantification_metrics }}</h2>
+    {% endif %}
+
     
 </body>
 </html>
