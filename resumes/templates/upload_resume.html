@@ -40,6 +40,27 @@
     <h2>ATS Score (Work Quantification Experience): {{ ats_score_quantification_metrics }}</h2>
     {% endif %}
 
+    <!-- {% if ats_score_spelling_errors is not None %}
+        <h2>ATS Score (Spelling Errors): {{ ats_score_spelling_errors }}</h2>
+    {% endif %} -->
+
+ {% if ats_score_spelling_grammar_errors is not None %}
+    <h2>Spelling and Grammar Errors:</h2>
+    <p>Total Errors: {{ ats_score_spelling_grammar_errors.num_errors }}</p>
+    <ul>
+    {% for error in ats_score_spelling_grammar_errors.error_details %}
+        <li>
+            <strong>Message:</strong> {{ error.message }}<br>
+            <strong>Context:</strong> {{ error.context }}<br>
+            <strong>Replacements:</strong> {{ error.replacements }}<br>
+            <strong>Offset:</strong> {{ error.offset }}<br>
+            <strong>Error Length:</strong> {{ error.error_length }}<br>
+        </li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+
     
 </body>
 </html>
