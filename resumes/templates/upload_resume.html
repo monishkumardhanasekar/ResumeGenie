@@ -40,23 +40,36 @@
     <h2>ATS Score (Work Quantification Experience): {{ ats_score_quantification_metrics }}</h2>
     {% endif %}
 
-    <!-- {% if ats_score_spelling_errors is not None %}
-        <h2>ATS Score (Spelling Errors): {{ ats_score_spelling_errors }}</h2>
-    {% endif %} -->
+    {% if ats_score_spelling_grammar_errors %}
+    <h2>ATS Score (Spelling & Grammar)</h2>
+    <p><strong>Total Score:</strong> {{ ats_score_spelling_grammar_errors.total_score }}</p>
+    <p><strong>Spelling Score:</strong> {{ ats_score_spelling_grammar_errors.spelling_score }}</p>
+    <p><strong>Grammar Score:</strong> {{ ats_score_spelling_grammar_errors.grammar_score }}</p>
 
- {% if ats_score_spelling_grammar_errors is not None %}
-    <h2>Spelling and Grammar Errors:</h2>
-    <p>Total Errors: {{ ats_score_spelling_grammar_errors.num_errors }}</p>
+    <h3>Spelling Errors</h3>
     <ul>
-    {% for error in ats_score_spelling_grammar_errors.error_details %}
-        <li>
-            <strong>Message:</strong> {{ error.message }}<br>
-            <strong>Context:</strong> {{ error.context }}<br>
-            <strong>Replacements:</strong> {{ error.replacements }}<br>
-            <strong>Offset:</strong> {{ error.offset }}<br>
-            <strong>Error Length:</strong> {{ error.error_length }}<br>
-        </li>
-    {% endfor %}
+        {% for error in ats_score_spelling_grammar_errors.error_details.spelling %}
+            <li>
+                <strong>Message:</strong> {{ error.message }}<br>
+                <strong>Context:</strong> {{ error.context }}<br>
+                <strong>Suggestions:</strong> {{ error.replacements|default:"No suggestions available." }}
+            </li>
+        {% empty %}
+            <li>No spelling errors found.</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Grammar Errors</h3>
+    <ul>
+        {% for error in ats_score_spelling_grammar_errors.error_details.grammar %}
+            <li>
+                <strong>Message:</strong> {{ error.message }}<br>
+                <strong>Context:</strong> {{ error.context }}<br>
+                <strong>Suggestions:</strong> {{ error.replacements|default:"No suggestions available." }}
+            </li>
+        {% empty %}
+            <li>No grammar errors found.</li>
+        {% endfor %}
     </ul>
 {% endif %}
 

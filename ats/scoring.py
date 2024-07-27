@@ -232,81 +232,63 @@ def check_quantification_metrics(resume_data):
 
     return total_score
 
-# from textblob import TextBlob
-
-# def check_spelling_errors(text):
-#     blob = TextBlob(text)
-#     corrected_text = blob.correct()
-    
-#     # Split both texts into words for comparison
-#     original_words = text.split()
-#     corrected_words = corrected_text.split()
-    
-#     # Find spelling mistakes by comparing original and corrected texts
-#     spelling_mistakes = [word for word, corrected in zip(original_words, corrected_words) if word != corrected]
-#     return spelling_mistakes
-
-#     # # Calculate the spelling errors score
-#     # total_words = len(original_words)
-#     # mistakes_count = len(spelling_mistakes)
-#     # score = max(0, 100 - (mistakes_count / total_words * 100))  # Example scoring formula
-
-#     # return score
-
-# from spellchecker import SpellChecker
-
-# def check_spelling_errors(resume_text):
-#     """
-#     Check for spelling errors in the extracted resume text.
-#     """
-#     spell = SpellChecker()
-    
-#     # Split the text into words
-#     words = resume_text.split()
-    
-#     # Find misspelled words
-#     misspelled = spell.unknown(words)
-#     return list(misspelled)
-    
-#     # Calculate the number of errors
-#     num_errors = len(misspelled)
-    
-#     # Score starts at 100
-#     score = 100
-    
-#     # Deduct points for each spelling error (example: 2 points per error)
-#     deduction_per_error = 2
-#     score -= num_errors * deduction_per_error
-    
-#     # Ensure score is not negative
-#     if score < 0:
-#         score = 0
-    
-#     return score
-
 
 import language_tool_python
 
 def check_spelling_grammar(text):
     tool = language_tool_python.LanguageTool('en-US')  # Use 'en-US' for English (United States)
-    
+
     matches = tool.check(text)
-    num_errors = len(matches)
     
-    error_details = []
-    for match in matches:
-        error_details.append({
+    # Separate spelling and grammar errors
+    spelling_errors = [match for match in matches if match.ruleId.startswith('MORFOLOGIK_RULE_EN_US')]
+    grammar_errors = [match for match in matches if not match.ruleId.startswith('MORFOLOGIK_RULE_EN_US')]
+
+    # Calculate scores
+    total_score = 40
+    spelling_score = 20
+    grammar_score = 20
+
+    if len(spelling_errors) > 10:
+        spelling_score = 0  # Deduct full score if more than 10 spelling mistakes
+
+    if len(grammar_errors) > 3:
+        grammar_score = 0  # Deduct full score if more than 3 grammar mistakes
+
+    total_score -= (20 - spelling_score)  # Deduct spelling score from total
+    total_score -= (20 - grammar_score)   # Deduct grammar score from total
+
+    # Prepare the results
+    error_details = {
+        'spelling': [],
+        'grammar': []
+    }
+
+    for match in spelling_errors:
+        error_details['spelling'].append({
             'message': match.message,
-            'replacements': match.replacements,
-            'context': match.context,
+            'context': text[match.offset:match.offset + match.errorLength],
+            'replacements': ', '.join(r.value if hasattr(r, 'value') else r for r in match.replacements),
             'offset': match.offset,
             'error_length': match.errorLength
         })
-    
+
+    for match in grammar_errors:
+        error_details['grammar'].append({
+            'message': match.message,
+            'context': text[match.offset:match.offset + match.errorLength],
+            'replacements': ', '.join(r.value if hasattr(r, 'value') else r for r in match.replacements),
+            'offset': match.offset,
+            'error_length': match.errorLength
+        })
+
     return {
-        'num_errors': num_errors,
+        'total_score': total_score,
+        'spelling_score': spelling_score,
+        'grammar_score': grammar_score,
         'error_details': error_details
     }
+
 
 
 
