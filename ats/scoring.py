@@ -188,7 +188,7 @@ def check_project_experience(resume_json):
 
 
 def check_quantification_metrics(resume_data):
-    total_score = 100
+    total_score = 20
     quantification_score = 20
 
     # Define regex patterns for quantification metrics
@@ -235,10 +235,24 @@ def check_quantification_metrics(resume_data):
 
 import language_tool_python
 
+def preprocess_text(text):
+    # Remove email addresses
+    text = re.sub(r'\S+@\S+', '', text)
+    # Remove URLs
+    text = re.sub(r'http\S+|www\S+', '', text)
+    # Remove phone numbers
+    text = re.sub(r'\+?\d[\d -]{8,12}\d', '', text)
+    # Remove extra spaces
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
 def check_spelling_grammar(text):
     tool = language_tool_python.LanguageTool('en-US')  # Use 'en-US' for English (United States)
 
-    matches = tool.check(text)
+    # Preprocess the text
+    cleaned_text = preprocess_text(text)
+
+    matches = tool.check(cleaned_text)
     
     # Separate spelling and grammar errors
     spelling_errors = [match for match in matches if match.ruleId.startswith('MORFOLOGIK_RULE_EN_US')]
@@ -252,8 +266,8 @@ def check_spelling_grammar(text):
     if len(spelling_errors) > 10:
         spelling_score = 0  # Deduct full score if more than 10 spelling mistakes
 
-    if len(grammar_errors) > 3:
-        grammar_score = 0  # Deduct full score if more than 3 grammar mistakes
+    if len(grammar_errors) > 6:
+        grammar_score = 0  # Deduct full score if more than 6 grammar mistakes
 
     total_score -= (20 - spelling_score)  # Deduct spelling score from total
     total_score -= (20 - grammar_score)   # Deduct grammar score from total
@@ -267,7 +281,7 @@ def check_spelling_grammar(text):
     for match in spelling_errors:
         error_details['spelling'].append({
             'message': match.message,
-            'context': text[match.offset:match.offset + match.errorLength],
+            'context': cleaned_text[match.offset:match.offset + match.errorLength],
             'replacements': ', '.join(r.value if hasattr(r, 'value') else r for r in match.replacements),
             'offset': match.offset,
             'error_length': match.errorLength
@@ -276,7 +290,7 @@ def check_spelling_grammar(text):
     for match in grammar_errors:
         error_details['grammar'].append({
             'message': match.message,
-            'context': text[match.offset:match.offset + match.errorLength],
+            'context': cleaned_text[match.offset:match.offset + match.errorLength],
             'replacements': ', '.join(r.value if hasattr(r, 'value') else r for r in match.replacements),
             'offset': match.offset,
             'error_length': match.errorLength
