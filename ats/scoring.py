@@ -1,5 +1,9 @@
 import re
 from datetime import datetime
+import pdfplumber
+from docx import Document
+import zipfile
+import xml.etree.ElementTree as ET
 
 def find_key_recursively(data, keys):
     if isinstance(data, dict):
@@ -160,10 +164,10 @@ def check_work_experience(resume_json):
     return score
 
 def check_project_experience(resume_json):
-    score = 40
+    score = 80
     weightage = {
-        "project_title": 20,
-        "description": 20,
+        "project_title": 40,
+        "description": 40,
     }
 
     # Define search keys
@@ -266,8 +270,8 @@ def check_spelling_grammar(text):
     if len(spelling_errors) > 10:
         spelling_score = 0  # Deduct full score if more than 10 spelling mistakes
 
-    if len(grammar_errors) > 6:
-        grammar_score = 0  # Deduct full score if more than 6 grammar mistakes
+    if len(grammar_errors) > 5:
+        grammar_score = 0  # Deduct full score if more than 5 grammar mistakes
 
     total_score -= (20 - spelling_score)  # Deduct spelling score from total
     total_score -= (20 - grammar_score)   # Deduct grammar score from total
@@ -304,5 +308,72 @@ def check_spelling_grammar(text):
     }
 
 
+def check_pdf_for_images_and_tables(pdf_path):
+    has_images = False
+    has_tables = False
 
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            # Check for images
+            if page.images:
+                has_images = True
+            
+            # Check for tables
+            tables = page.extract_tables()
+            if tables:
+                has_tables = True
+
+            if has_images or has_tables:
+                break  # Stop processing if either images or tables are found
+
+    return has_images, has_tables
+
+def calculate_pdf_score(pdf_path):
+    has_images, has_tables = check_pdf_for_images_and_tables(pdf_path)
+    score = 60
+    if has_images:
+        score -= 30
+    if has_tables:
+        score -= 30
+    return score
+
+def check_docx_for_elements(docx_path):
+    doc = Document(docx_path)
+    has_images = False
+    has_tables = False
+    has_graphs = False
+
+    # Check for images
+    for rel in doc.part.rels.values():
+        if "image" in rel.target_ref:
+            has_images = True
+            break
+
+    # Check for tables
+    if doc.tables:
+        has_tables = True
+
+    # Check for charts using zipfile and xml.etree.ElementTree
+    with zipfile.ZipFile(docx_path, 'r') as docx:
+        for file in docx.namelist():
+            if file.startswith('word/charts/'):
+                with docx.open(file) as chart_file:
+                    tree = ET.parse(chart_file)
+                    root = tree.getroot()
+                    if root.tag.endswith('chart'):
+                        has_graphs = True
+                        break
+
+    return has_images, has_tables, has_graphs
+
+def calculate_docx_score(docx_path):
+    has_images, has_tables, has_graphs = check_docx_for_elements(docx_path)
+    score = 60
+    if has_images:
+        score -= 20
+    if has_tables:
+        score -= 20
+    if has_graphs:
+        score -= 20
+    return score, has_images, has_tables, has_graphs
 

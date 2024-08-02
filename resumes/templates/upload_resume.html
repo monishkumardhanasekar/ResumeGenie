@@ -21,6 +21,11 @@
     {% if ats_score is not None %}
         <h2>ATS Score: {{ ats_score }}</h2>
     {% endif %}
+    
+    {% if ats_score_contact is not None %}
+        <h2>ATS Score (Contact): {{ ats_score_contact }}</h2>
+    {% endif %}
+
     {% if ats_score_qualification is not None %}
         <h2>ATS Score (Qualification): {{ ats_score_qualification }}</h2>
     {% endif %}
@@ -71,7 +76,11 @@
             <li>No grammar errors found.</li>
         {% endfor %}
     </ul>
-{% endif %}
+    {% endif %}
+
+    {% if ats_file_check_images_tables_score is not None %}
+        <h2>ATS Score (Image and Table Score): {{ ats_file_check_images_tables_score }}</h2>
+    {% endif %}
 
 
     
