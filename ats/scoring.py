@@ -4,6 +4,7 @@ import pdfplumber
 from docx import Document
 import zipfile
 import xml.etree.ElementTree as ET
+import fitz
 
 def find_key_recursively(data, keys):
     if isinstance(data, dict):
@@ -377,3 +378,140 @@ def calculate_docx_score(docx_path):
         score -= 20
     return score, has_images, has_tables, has_graphs
 
+
+# # to get the list of the fonts from docx
+# def get_docx_fonts(file_path):
+#     doc = Document(file_path)
+#     fonts = set()
+
+#     for paragraph in doc.paragraphs:
+#         for run in paragraph.runs:
+#             if run.font.name:
+#                 fonts.add(run.font.name)
+
+#     return fonts
+
+
+# # to get the list of the fonts from pdf
+# def get_pdf_fonts(file):
+#     # Move the stream position to the beginning
+#     file.seek(0)
+#     pdf_document = fitz.open(stream=file.read(), filetype="pdf")
+#     fonts = set()
+    
+#     # Iterate over each page in the PDF
+#     for page_num in range(pdf_document.page_count):
+#         page = pdf_document[page_num]
+#         # Get text information for the page
+#         text_page = page.get_textpage()
+#         # Extract font information
+#         for block in text_page.extractDICT()["blocks"]:
+#             for line in block["lines"]:
+#                 for span in line["spans"]:
+#                     fonts.add(span["font"])
+    
+#     pdf_document.close()
+#     return list(fonts)
+
+
+
+ALLOWED_FONTS = {
+    'Times New Roman', 'TimesNewRomanPS-ItalicMT', 'TimesNewRomanPS-BoldMT', 'TimesNewRomanPS-BoldItal', 'TimesNewRomanPSMT',
+    'Tahoma', 'Tahoma-ItalicMT', 'Tahoma-BoldMT', 'Tahoma-BoldItal',
+    'Verdana', 'Verdana-ItalicMT', 'Verdana-BoldMT', 'Verdana-BoldItal',
+    'Arial', 'Arial-BoldMT', 'Arial-ItalicMT', 'Arial-BoldItalicMT', 'ArialMT',
+    'Helvetica', 'Helvetica-ItalicMT', 'Helvetica-BoldMT', 'Helvetica-BoldItalicMT',
+    'Calibri', 'Calibri-ItalicMT', 'Calibri-BoldMT', 'Calibri-BoldItalicMT',
+    'Georgia', 'Georgia-ItalicMT', 'Georgia-BoldMT', 'Georgia-BoldItalicMT',
+    'Cambria', 'Cambria-ItalicMT', 'Cambria-BoldMT', 'Cambria-BoldItalicMT',
+    'Gill Sans', 'GillSans-ItalicMT', 'GillSans-BoldMT', 'GillSans-BoldItalicMT',
+    'Garamond', 'Garamond-ItalicMT', 'Garamond-BoldMT', 'Garamond-BoldItalicMT'
+}
+
+MIN_FONT_SIZE = 9
+MAX_FONT_SIZE = 16
+FONT_CHECK_SCORE = 20
+SIZE_CHECK_SCORE = 20
+EMPTY_FONT_PENALTY = 20  # Penalty for not finding any fonts
+EMPTY_SIZE_PENALTY = 20  # Penalty for not finding any sizes
+
+def get_pdf_fonts(file):
+    file.seek(0)
+    pdf_document = fitz.open(stream=file.read(), filetype="pdf")
+    fonts = set()
+    sizes = set()
+    
+    for page_num in range(pdf_document.page_count):
+        page = pdf_document.load_page(page_num)
+        text_page = page.get_textpage()
+        for block in text_page.extractDICT()["blocks"]:
+            for line in block["lines"]:
+                for span in line["spans"]:
+                    fonts.add(span["font"])
+                    sizes.add(span["size"])
+
+    return fonts, sizes
+
+def get_docx_fonts(file):
+    document = Document(file)
+    fonts = set()
+    sizes = set()
+
+    for paragraph in document.paragraphs:
+        for run in paragraph.runs:
+            if run.font.name:
+                fonts.add(run.font.name)
+            if run.font.size:
+                sizes.add(run.font.size.pt)
+
+    return fonts, sizes
+
+def calculate_pdf_fonts_score(file):
+    fonts, sizes = get_pdf_fonts(file)
+    
+    # Calculate font check score
+    font_check_score = FONT_CHECK_SCORE
+    if not fonts:
+        font_check_score -= EMPTY_FONT_PENALTY
+    else:
+        for font in fonts:
+            if font not in ALLOWED_FONTS:
+                font_check_score -= FONT_CHECK_SCORE
+                break
+
+    # Calculate size check score
+    size_check_score = SIZE_CHECK_SCORE
+    if not sizes:
+        size_check_score -= EMPTY_SIZE_PENALTY
+    else:
+        for size in sizes:
+            if size < MIN_FONT_SIZE or size > MAX_FONT_SIZE:
+                size_check_score -= SIZE_CHECK_SCORE
+                break
+
+    return font_check_score + size_check_score
+
+def calculate_docx_fonts_score(file):
+    fonts, sizes = get_docx_fonts(file)
+    
+    # Calculate font check score
+    font_check_score = FONT_CHECK_SCORE
+    if not fonts:
+        font_check_score -= EMPTY_FONT_PENALTY
+    else:
+        for font in fonts:
+            if font not in ALLOWED_FONTS:
+                font_check_score -= FONT_CHECK_SCORE
+                break
+
+    # Calculate size check score
+    size_check_score = SIZE_CHECK_SCORE
+    if not sizes:
+        size_check_score -= EMPTY_SIZE_PENALTY
+    else:
+        for size in sizes:
+            if size < MIN_FONT_SIZE or size > MAX_FONT_SIZE:
+                size_check_score -= SIZE_CHECK_SCORE
+                break
+
+    return font_check_score + size_check_score
