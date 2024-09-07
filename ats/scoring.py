@@ -515,3 +515,67 @@ def calculate_docx_fonts_score(file):
                 break
 
     return font_check_score + size_check_score
+
+
+def check_page_size_usage_pdf(file):
+    score = 20
+    file.seek(0)  # Reset the file pointer to the beginning
+    pdf_document = fitz.open(stream=file.read(), filetype="pdf")  # Open the PDF document
+    total_pages = pdf_document.page_count
+    # print(total_pages)
+    
+    # Iterate through each page
+    for page_number in range(total_pages):
+        page = pdf_document[page_number]
+        text = page.get_text().strip()  # Get the text content of the page
+        word_count = len(text.split())  # Count the words on the page
+        
+        # # Print word count for each page
+        # print(f"Page {page_number + 1} word count: {word_count}")
+        
+        # Check if the word count is outside the range (under 80% or over 100% utilization threshold)
+        if word_count < 450 or word_count > 650:
+            return 0  # Deduct the full 20 points if any page is underutilized
+    
+    return score
+
+
+def check_page_size_usage_docx(file):
+    """
+    This function checks the page size usage of a DOCX file and returns a score based on the amount of text in the document.
+    If the total word count is less than the threshold, it returns a score of 0.
+    If the document is sufficiently used, it returns the full score of 20.
+    
+    Args:
+        file: A file-like object containing the DOCX document.
+
+    Returns:
+        int: The score, 0 if the document is underutilized, otherwise 20.
+    """
+    score = 20
+    doc = Document(file)
+    
+    # Initialize variable for text accumulation
+    text = []
+    
+    # Extract text from paragraphs
+    for paragraph in doc.paragraphs:
+        text.append(paragraph.text.strip())
+    
+    # Extract text from tables
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                text.append(cell.text.strip())
+    
+    full_text = ' '.join(text)
+    word_count = len(full_text.split())
+    
+    # # Print word count for the whole document
+    # print(f"Document word count: {word_count}")
+
+    # Threshold for scoring, adjust as needed
+    if word_count < 450:
+        return 0  # Deduct the full 20 points if the word count is below the threshold
+    
+    return score

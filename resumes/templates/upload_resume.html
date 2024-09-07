@@ -87,6 +87,10 @@
         <h2>ATS Score (Font and Font Size Check): {{ ats_font_check }}</h2>
     {% endif %}
 
+    {% if ats_page_size_score is not None %}
+        <h2>ATS Score (Page Score): {{ ats_page_size_score }}</h2>
+    {% endif %}
+
 
     
 </body>
