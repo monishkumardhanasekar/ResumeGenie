@@ -1,10 +1,21 @@
 import fitz
 from docx import Document
-from g4f.client import Client
+import os
+# from g4f.client import Client
+from openai import OpenAI
 from django.conf import settings
 from pymongo import MongoClient
+from dotenv import load_dotenv
 
-client = Client()
+load_dotenv()
+
+openrouter_api_key = os.getenv("AI_API_KEY")
+
+
+client = OpenAI(
+  base_url="https://openrouter.ai/api/v1",
+  api_key=openrouter_api_key
+)
 
 def extract_text_from_pdf(file):
     text = ""
@@ -34,7 +45,7 @@ def extract_text_from_txt(file):
 
 def get_resume_details_from_ai(extracted_text):
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="openai/gpt-3.5-turbo",
         messages=[
             {"role": "user", "content": f"Extract all details from the following resume text and provide a structured JSON format with fields like name, email, linkedin, phone, skills, work_experience, professional_certifications, education, project_experience and every fields with their details accordingly. \n\n{extracted_text}"}
         ],

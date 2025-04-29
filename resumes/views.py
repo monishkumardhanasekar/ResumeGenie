@@ -9,6 +9,12 @@ from pymongo import MongoClient
 import os
 import re
 
+from .forms import ResumeUploadForm, JobDescriptionForm  
+from .models import Resume, JobDescription 
+from ats.job_parser import parse_job_description
+from ats.matching_scoring import score_resume_against_job
+
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -141,3 +147,71 @@ def upload_resume(request):
 
 def success(request):
     return render(request, 'success.html')
+
+
+def upload_job_description(request):
+    if request.method == 'POST':
+        form = JobDescriptionForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('upload_job_success')
+    else:
+        form = JobDescriptionForm()
+    return render(request, 'upload_job_description.html', {'form': form})
+
+def upload_job_success(request):
+    return render(request, 'upload_job_success.html')
+
+
+def match_resume_to_job(request):
+    extracted_text = None
+    ai_json = None
+    job_descriptions = JobDescription.objects.all()
+    score = None
+
+    if request.method == 'POST':
+        resume_file = request.FILES['resume']
+        selected_job_id = request.POST['job_id']
+        selected_job = JobDescription.objects.get(id=selected_job_id)
+
+        # Get file extension
+        file_ext = resume_file.name.split('.')[-1].lower()
+
+        # Extract text from resume
+        if file_ext == 'pdf':
+            extracted_text = extract_text_from_pdf(resume_file)
+        elif file_ext == 'docx':
+            extracted_text = extract_text_from_docx(resume_file)
+        elif file_ext == 'txt':
+            extracted_text = extract_text_from_txt(resume_file)
+
+        if extracted_text:
+            extracted_text = clean_extracted_text(extracted_text)
+
+        # Parse resume using AI
+        if extracted_text:
+            ai_response = get_resume_details_from_ai(extracted_text)
+
+            try:
+                start_index = ai_response.find('{')
+                end_index = ai_response.rfind('}') + 1
+                json_str = ai_response[start_index:end_index]
+                ai_json = json.loads(json_str)
+            except json.JSONDecodeError as e:
+                print(f"Error decoding JSON: {e}")
+
+        # Parse job description using manual parser
+        jd_parsed = parse_job_description(selected_job.description_text)
+
+        # Score resume against job description
+        if ai_json and jd_parsed:
+            score = score_resume_against_job(ai_json, jd_parsed)
+
+        return render(request, 'match_result.html', {
+            'score': score,
+            'job_title': selected_job.title,
+        })
+
+    return render(request, 'upload_resume_select_job.html', {
+        'job_descriptions': job_descriptions
+    })

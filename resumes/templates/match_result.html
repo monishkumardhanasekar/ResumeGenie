@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Matching Result</title>
+</head>
+<body>
+    <h1>Matching Result for {{ job_title }}</h1>
+
+    {% if score %}
+        <h2>Total Score: {{ score.total_score }}%</h2>
+
+        <ul>
+            <li>Skill Match Score: {{ score.skill_score }}%</li>
+            <li>Education Match Score: {{ score.education_score }}%</li>
+            <li>Experience Match Score: {{ score.experience_score }}%</li>
+            <li>Title Match Score: {{ score.title_score }}%</li>
+        </ul>
+    {% else %}
+        <p>No score calculated. Please try again.</p>
+    {% endif %}
+</body>
+</html>

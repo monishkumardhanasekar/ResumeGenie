@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Resume and Select Job</title>
+</head>
+<body>
+    <h1>Upload Your Resume and Select a Job to Match</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="resume">Upload Resume:</label>
+        <input type="file" name="resume" required><br><br>
+
+        <label for="job_id">Select Job:</label>
+        <select name="job_id" required>
+            {% for job in job_descriptions %}
+                <option value="{{ job.id }}">{{ job.title }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <button type="submit">Match Resume</button>
+    </form>
+</body>
+</html>

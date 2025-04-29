@@ -268,10 +268,10 @@ def check_spelling_grammar(text):
     spelling_score = 20
     grammar_score = 20
 
-    if len(spelling_errors) > 10:
+    if len(spelling_errors) > 15:
         spelling_score = 0  # Deduct full score if more than 10 spelling mistakes
 
-    if len(grammar_errors) > 5:
+    if len(grammar_errors) > 15:
         grammar_score = 0  # Deduct full score if more than 5 grammar mistakes
 
     total_score -= (20 - spelling_score)  # Deduct spelling score from total
